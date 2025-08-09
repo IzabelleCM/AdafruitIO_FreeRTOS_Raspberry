@@ -16,18 +16,18 @@
 #include "lwip/dns.h"
 
 // ---- WIFI ----
-#define WIFI_SSID      "SuaRede"
-#define WIFI_PASS      "SuaSenha"
+#define WIFI_SSID      "SuaRedeWiFi"
+#define WIFI_PASS      "SuaSenhaWiFi"
 
 // ---- ADAFRUIT IO ----
 #define MQTT_BROKER_URL "io.adafruit.com"
-#define MQTT_USER       "SeuUser"             // seu username Adafruit IO
+#define MQTT_USER       "SeuUsername"            // seu username Adafruit IO
 #define MQTT_PASS       "SuaChaveAIO" // sua chave AIO
-#define MQTT_CLIENT_ID  "SeuClientID"
+#define MQTT_CLIENT_ID  "SeuClientID" // ID do cliente MQTT, pode ser qualquer string única
 
 // ---- FEEDS ----
-#define MQTT_TOPIC_JOY      "SeuUser/feeds/joy"
-#define MQTT_TOPIC_TEMP     "SeuUser/feeds/temp"
+#define MQTT_TOPIC_JOY      "SeuUsername/feeds/joy"
+#define MQTT_TOPIC_TEMP     "SeuUsername/feeds/temp"
 
 
 // Variáveis e definições globais
@@ -98,7 +98,7 @@ void displayOLED()
         char tempStr[30];
         char joyStr[30];
 
-        sprintf(tempStr, "Temperatura: %d C", temperatura);
+        sprintf(tempStr, "Temperatura: %.2f C", temperatura);
         sprintf(joyStr, "Joy: %s", posicaoJoy);
 
         ssd1306_draw_string(ssd, 0, 10, tempStr);
@@ -143,10 +143,12 @@ void vTemperaturaTask(void *pvParameters)
         uint16_t leitura_bruta = adc_read();
         const float fator_conversao = 3.3f / (1 << 12); 
         float tensao = leitura_bruta * fator_conversao;
-        float temp_float = 27.0f - (tensao - 0.706f) / 0.001721f;
+
+        // Atualiza a variável global
+        temperatura = 27.0f - (tensao - 0.706f) / 0.001721f;
 
         char tempStr[16];
-        snprintf(tempStr, sizeof(tempStr), "%.2f", temp_float);
+        snprintf(tempStr, sizeof(tempStr), "%.2f", temperatura);
 
         mqtt_comm_publish(MQTT_TOPIC_TEMP, (const uint8_t *)tempStr, strlen(tempStr));
         ledPublicacao();
